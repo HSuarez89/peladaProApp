@@ -3,6 +3,10 @@ import { View, Text, TextInput, Pressable, KeyboardAvoidingView, TouchableOpacit
 import styles from "./styles";
 
 const LoginPage = ({goBack}) => {
+
+    const [email, setEmail] = useState(null)
+    const [password, setPassword] = useState(null)
+
     return(
         <KeyboardAvoidingView style={styles.mainView} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
             <Pressable style={styles.form} onPress={() => Keyboard.dismiss()}>
