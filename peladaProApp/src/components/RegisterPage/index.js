@@ -19,9 +19,9 @@ const RegisterPage = ({goBack}) => {
         }
     
         setLoading(true);
-
+    
         const phoneStr = tel ? tel.toString() : '';
-
+    
         const { user, error } = await supabase.auth.signUp({
             email: email,
             password: password,
@@ -41,8 +41,8 @@ const RegisterPage = ({goBack}) => {
     
         Alert.alert('Usuário cadastrado com sucesso!');
         setLoading(false);
+        goBack();
     }
-     
 
     return (
         <KeyboardAvoidingView style={styles.mainView} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>

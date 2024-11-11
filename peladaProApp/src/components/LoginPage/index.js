@@ -4,11 +4,11 @@ import styles from "./styles";
 import ProfilePage from "../ProfilePage";
 import { supabase } from "../../lib/supabase";
 
-const LoginPage = ({ goBack }) => {
+const LoginPage = ({ goBack, onLoginSuccess }) => {
   const [email, setEmail] = useState(null);
   const [password, setPassword] = useState(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false); // Definindo o estado de autenticação
 
   async function signInWithEmail() {
     setLoading(true);
@@ -25,14 +25,16 @@ const LoginPage = ({ goBack }) => {
         password: password,
       });
 
-      console.log('Resposta do Supabase:', { data, error });
-
       if (error) {
         Alert.alert('Erro', error.message);
       } else if (data?.user) {
         Alert.alert('Bem-vindo', 'Você fez login com sucesso!');
-        console.log('Usuário autenticado:', data.user);
-        setIsAuthenticated(true);
+        setIsAuthenticated(true); // Atualizando o estado de autenticação
+
+        // Chama o callback onLoginSuccess para notificar a LaunchPage
+        if (onLoginSuccess) {
+          onLoginSuccess(); // Chama a função passada como prop para notificar o sucesso do login
+        }
       } else {
         Alert.alert('Erro', 'Usuário não encontrado ou senha incorreta.');
       }
@@ -44,6 +46,7 @@ const LoginPage = ({ goBack }) => {
     setLoading(false);
   }
 
+  // Se estiver autenticado, renderiza a página de perfil
   if (isAuthenticated) {
     return <ProfilePage />;
   }
