@@ -6,6 +6,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import GroupPage from "../GroupPage";
 import FinancePage from "../FinancePage";
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 const Tab = createBottomTabNavigator();
 
@@ -64,7 +65,26 @@ const ProfilePage = ({ onLogout }) => {
 
   return (
     <NavigationContainer independent={true}>
-      <Tab.Navigator>
+      <Tab.Navigator
+        screenOptions={({ route }) => ({
+          tabBarIcon: ({ focused, color, size }) => {
+            let iconName;
+
+            if (route.name === 'Perfil') {
+              iconName = focused ? 'person' : 'person-outline';
+            } else if (route.name === 'Grupos') {
+              iconName = focused ? 'people' : 'people-outline';
+            } else if (route.name === 'Finanças') {
+              iconName = focused ? 'wallet' : 'wallet-outline';
+            }
+
+            return <Ionicons name={iconName} size={size} color={color} />;
+          },
+          tabBarActiveTintColor: '#167830',
+          tabBarInactiveTintColor: 'gray',
+          tabBarLabelStyle: { fontSize: 12 },
+        })}
+      >
         <Tab.Screen name="Perfil" component={UserProfile} />
         <Tab.Screen name="Grupos" component={GroupPage} />
         <Tab.Screen name="Finanças" component={FinancePage} />
