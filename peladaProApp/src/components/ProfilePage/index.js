@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, Alert, Image, TouchableOpacity } from "react-native";
+import { View, Text, Alert, Image, TouchableOpacity, ActivityIndicator } from "react-native";
 import { supabase } from "../../lib/supabase";
 import styles from "./styles";
 import { NavigationContainer } from '@react-navigation/native';
@@ -7,13 +7,17 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import GroupPage from "../GroupPage";
 import FinancePage from "../FinancePage";
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import GroupCard from "../GroupCard";
 
 const Tab = createBottomTabNavigator();
 
 const ProfilePage = ({ onLogout }) => {
   const [user, setUser] = useState(null);
+  const [groups, setGroups] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Função para carregar os dados do usuário e buscar os grupos
     async function fetchUser() {
       const { data, error } = await supabase.auth.getUser();
 
@@ -22,7 +26,19 @@ const ProfilePage = ({ onLogout }) => {
         console.error("Erro ao buscar usuário:", error);
       } else if (data?.user) {
         setUser(data.user);
+        // Agora que temos o usuário, vamos buscar os grupos onde ele é o administrador
+        const { data: groupsData, error: groupsError } = await supabase
+          .from("Groups")
+          .select("*")
+          .eq("adm", data.user.id); // Filtra os grupos pelo ID do administrador
+
+        if (groupsError) {
+          console.error("Erro ao buscar grupos:", groupsError.message);
+        } else {
+          setGroups(groupsData);
+        }
       }
+      setLoading(false);
     }
 
     fetchUser();
@@ -45,9 +61,9 @@ const ProfilePage = ({ onLogout }) => {
   const UserProfile = () => (
     <View style={styles.mainView}>
       <View style={styles.viewHeader}>
-        <Image source={require('../../img/logoapp.png')} style={styles.logo}/>
+        <Image source={require('../../img/logoapp.png')} style={styles.logo} />
         <TouchableOpacity onPress={handleLogout}>
-          <Image source={require('../../img/logout.png')} style={styles.logout}/>
+          <Image source={require('../../img/logout.png')} style={styles.logout} />
         </TouchableOpacity>
       </View>
       <View style={styles.userInfo}>
@@ -58,6 +74,23 @@ const ProfilePage = ({ onLogout }) => {
             <Text style={styles.infoText}>Email: {user.email}</Text>
             <Text style={styles.infoText}>Telefone: {user.user_metadata?.phone || "N/A"}</Text>
           </>
+        )}
+      </View>
+
+      <View style={styles.myGroups}>
+        <Text style={styles.text}>Meus Grupos</Text>
+        {loading ? (
+          <ActivityIndicator size="large" color="#167830" />
+        ) : (
+          <View>
+            {groups.length > 0 ? (
+              groups.map((group) => (
+                <GroupCard key={group.id} group={group} />
+              ))
+            ) : (
+              <Text>Você não é administrador de nenhum grupo.</Text>
+            )}
+          </View>
         )}
       </View>
     </View>

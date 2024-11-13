@@ -22,15 +22,19 @@ const styles = StyleSheet.create({
         paddingHorizontal: 15,
         paddingVertical: 5
     },
-    myGroups: {
+    viewButton: {
         width: '100%',
-        height: 'auto',
-        paddingLeft: 20,
-        paddingTop: 15,
-        paddingRight: 20,
+        flex: 1,
+        alignItems: 'center',
+        flexDirection: 'column-reverse',
     },
-    groups: {
-        
+    textButton: {
+       color: '#ffffff',
+       backgroundColor: '#167830',
+       paddingHorizontal: 20,
+       paddingVertical: 5, fontWeight: 'bold',
+       borderRadius: 5,
+       marginBottom: 20
     }
 })
 

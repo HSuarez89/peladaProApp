@@ -37,6 +37,21 @@ const styles = StyleSheet.create({
         width: "100%",
         alignItems: "flex-start",
         marginLeft: 30,
+    },
+    myGroups: {
+        width: '100%',
+        flex: 1,
+        backgroundColor: '#ababab',
+        paddingLeft: 20,
+        paddingTop: 15,
+        paddingRight: 20,
+        marginTop: 30,
+        borderRadius: 20
+    },
+    text: {
+        color: '#167830',
+        fontWeight: 'bold',
+        marginBottom: 10
     }
 })
 
