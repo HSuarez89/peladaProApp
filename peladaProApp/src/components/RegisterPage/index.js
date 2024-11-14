@@ -1,16 +1,15 @@
 import React, { useState } from "react";
 import { Text, TextInput, TouchableOpacity, Keyboard, Pressable, KeyboardAvoidingView, Platform, Alert } from "react-native";
 import styles from "./styles";
-import { supabase } from '../../lib/supabase'
+import { supabase } from '../../lib/supabase';
 
-const RegisterPage = ({goBack}) => {
-
-    const [name, setName] = useState(null)
-    const [email, setEmail] = useState(null)
-    const [tel, setTel] = useState(null)
-    const [password, setPassword] = useState(null)
-    const [confPassword, setConfPassword] = useState(null)
-    const [loading, setLoading] = useState(false)
+const RegisterPage = ({ goBack }) => {
+    const [name, setName] = useState(null);
+    const [email, setEmail] = useState(null);
+    const [tel, setTel] = useState(null);
+    const [password, setPassword] = useState(null);
+    const [confPassword, setConfPassword] = useState(null);
+    const [loading, setLoading] = useState(false);
 
     async function signUpWithEmail() {
         if (password !== confPassword) {
@@ -39,7 +38,31 @@ const RegisterPage = ({goBack}) => {
             return;
         }
     
+        // Alerta de sucesso do cadastro
         Alert.alert('Usuário cadastrado com sucesso!');
+    
+        // Atualizando o metadata após o cadastro
+        if (user) {
+            try {
+                const { error: metadataError } = await supabase.auth.updateUser({
+                    data: {
+                        display_name: name, // Nome do usuário
+                        phone: phoneStr,     // Telefone do usuário
+                    }
+                });
+    
+                if (metadataError) {
+                    console.error('Erro ao atualizar o metadata do usuário:', metadataError.message);
+                    Alert.alert('Erro ao atualizar os dados. Tente novamente.');
+                } else {
+                    console.log('Metadata do usuário atualizado com sucesso!');
+                }
+            } catch (error) {
+                console.error('Erro ao atualizar os dados do usuário:', error.message);
+                Alert.alert('Erro inesperado ao tentar atualizar os dados do usuário.');
+            }
+        }
+    
         setLoading(false);
         goBack();
     }
@@ -85,8 +108,8 @@ const RegisterPage = ({goBack}) => {
                     value={confPassword} 
                     secureTextEntry
                 />
-                <TouchableOpacity style={styles.button}>
-                    <Text style={styles.buttonText} disabled={loading} onPress={signUpWithEmail}>Cadastrar</Text>
+                <TouchableOpacity style={styles.button} onPress={signUpWithEmail} disabled={loading}>
+                    <Text style={styles.buttonText}>Cadastrar</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.button} onPress={goBack}>
                     <Text style={styles.buttonText}>Voltar</Text>
@@ -97,4 +120,3 @@ const RegisterPage = ({goBack}) => {
 };
 
 export default RegisterPage;
-

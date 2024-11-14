@@ -1,14 +1,14 @@
 import React, { useState } from "react";
-import { Text, TextInput, Pressable, KeyboardAvoidingView, TouchableOpacity, Keyboard, Platform, Alert } from "react-native";
+import { Text, TextInput, TouchableOpacity, Alert, Keyboard, Pressable, KeyboardAvoidingView, Platform } from "react-native";
 import styles from "./styles";
-import ProfilePage from "../ProfilePage";
 import { supabase } from "../../lib/supabase";
+import ProfilePage from "../ProfilePage";
 
 const LoginPage = ({ goBack, onLoginSuccess }) => {
   const [email, setEmail] = useState(null);
   const [password, setPassword] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false); // Definindo o estado de autenticação
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   async function signInWithEmail() {
     setLoading(true);
@@ -29,11 +29,14 @@ const LoginPage = ({ goBack, onLoginSuccess }) => {
         Alert.alert('Erro', error.message);
       } else if (data?.user) {
         Alert.alert('Bem-vindo', 'Você fez login com sucesso!');
-        setIsAuthenticated(true); // Atualizando o estado de autenticação
+        setIsAuthenticated(true);
+
+        // Sincronizar dados com a tabela usuarios
+        await checkAndSyncUserData(data.user);
 
         // Chama o callback onLoginSuccess para notificar a LaunchPage
         if (onLoginSuccess) {
-          onLoginSuccess(); // Chama a função passada como prop para notificar o sucesso do login
+          onLoginSuccess();
         }
       } else {
         Alert.alert('Erro', 'Usuário não encontrado ou senha incorreta.');
@@ -44,6 +47,45 @@ const LoginPage = ({ goBack, onLoginSuccess }) => {
     }
 
     setLoading(false);
+  }
+
+  async function checkAndSyncUserData(user) {
+    try {
+      // Verifica se o usuário já existe na tabela usuarios
+      const { data, error } = await supabase
+        .from('usuarios')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (data) {
+        console.log('Usuário já existe na tabela usuarios.');
+      } else {
+        // Se não existe, insere os dados do usuário a partir do metadata
+        const displayName = user.user_metadata?.display_name || 'Nome não informado';
+        const phone = user.user_metadata?.phone || 'Telefone não informado';
+
+        // Insere o usuário na tabela usuarios com os dados do email e metadata
+        const { error: insertError } = await supabase
+          .from('usuarios')
+          .insert([
+            {
+              id: user.id,
+              email: user.email,
+              display_name: displayName,
+              phone: phone,
+            },
+          ]);
+
+        if (insertError) {
+          console.error('Erro ao sincronizar dados do usuário:', insertError.message);
+        } else {
+          console.log('Usuário sincronizado com sucesso!');
+        }
+      }
+    } catch (err) {
+      console.error('Erro ao verificar ou sincronizar os dados do usuário:', err);
+    }
   }
 
   // Se estiver autenticado, renderiza a página de perfil

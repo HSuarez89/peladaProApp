@@ -13,25 +13,47 @@ const Tab = createBottomTabNavigator();
 
 const ProfilePage = ({ onLogout }) => {
   const [user, setUser] = useState(null);
+  const [userData, setUserData] = useState(null); // Para armazenar os dados do usuário da tabela 'usuarios'
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Função para carregar os dados do usuário e buscar os grupos
     async function fetchUser() {
       const { data, error } = await supabase.auth.getUser();
-
+  
       if (error) {
         Alert.alert("Erro", "Não foi possível carregar os dados do usuário.");
         console.error("Erro ao buscar usuário:", error);
       } else if (data?.user) {
         setUser(data.user);
-        // Agora que temos o usuário, vamos buscar os grupos onde ele é o administrador
+  
+        // Verifica dados na tabela 'usuarios'
+        const { data: userData, error: userDataError, count } = await supabase
+          .from("usuarios")
+          .select("*", { count: 'exact' })
+          .eq("id", data.user.id);
+  
+        if (userDataError) {
+          console.error("Erro ao buscar dados do usuário:", userDataError.message);
+          Alert.alert("Erro", "Não foi possível buscar os dados do usuário.");
+        } else {
+          console.log("Registros encontrados:", count); // Verifica quantos registros foram retornados
+          if (count > 1) {
+            console.error("Múltiplos registros encontrados para o usuário.");
+            Alert.alert("Erro", "Múltiplos registros encontrados para o usuário.");
+          } else if (count === 1) {
+            setUserData(userData[0]); // Salva os dados
+          } else {
+            console.log("Nenhum registro encontrado para o usuário.");
+          }
+        }
+  
+        // Buscar grupos do usuário
         const { data: groupsData, error: groupsError } = await supabase
           .from("Groups")
           .select("*")
-          .eq("adm", data.user.id); // Filtra os grupos pelo ID do administrador
-
+          .eq("adm", data.user.id);
+  
         if (groupsError) {
           console.error("Erro ao buscar grupos:", groupsError.message);
         } else {
@@ -40,9 +62,9 @@ const ProfilePage = ({ onLogout }) => {
       }
       setLoading(false);
     }
-
+  
     fetchUser();
-  }, []);
+  }, []);    
 
   const handleLogout = async () => {
     Alert.alert(
@@ -53,7 +75,7 @@ const ProfilePage = ({ onLogout }) => {
         { text: 'Sim', onPress: async () => {
           await supabase.auth.signOut();
           onLogout(); 
-        }},
+        }} 
       ]
     );
   };
@@ -68,12 +90,14 @@ const ProfilePage = ({ onLogout }) => {
       </View>
       <View style={styles.userInfo}>
         <Text style={styles.welcome}>Bem-vindo ao seu perfil</Text>
-        {user && (
+        {userData ? (
           <>
-            <Text style={styles.infoText}>Nome: {user.user_metadata?.display_name || "N/A"}</Text>
-            <Text style={styles.infoText}>Email: {user.email}</Text>
-            <Text style={styles.infoText}>Telefone: {user.user_metadata?.phone || "N/A"}</Text>
+            <Text style={styles.infoText}>Nome: {userData.display_name || "N/A"}</Text>
+            <Text style={styles.infoText}>Email: {userData.email}</Text>
+            <Text style={styles.infoText}>Telefone: {userData.phone || "Telefone não informado"}</Text>
           </>
+        ) : (
+          <ActivityIndicator size="large" color="#167830" />
         )}
       </View>
 
@@ -116,8 +140,7 @@ const ProfilePage = ({ onLogout }) => {
           tabBarActiveTintColor: '#167830',
           tabBarInactiveTintColor: 'gray',
           tabBarLabelStyle: { fontSize: 12 },
-        })}
-      >
+        })}>
         <Tab.Screen name="Perfil" component={UserProfile} />
         <Tab.Screen name="Grupos" component={GroupPage} />
         <Tab.Screen name="Finanças" component={FinancePage} />
