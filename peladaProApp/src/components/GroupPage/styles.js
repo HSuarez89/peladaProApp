@@ -18,9 +18,11 @@ const styles = StyleSheet.create({
         marginBottom: 10
     },
     searchBar: {
+        width: '80%',
         backgroundColor: '#ababab',
         paddingHorizontal: 15,
-        paddingVertical: 5
+        paddingVertical: 5,
+        borderRadius: 10
     },
     viewButton: {
         width: '100%',
@@ -35,6 +37,19 @@ const styles = StyleSheet.create({
        paddingVertical: 5, fontWeight: 'bold',
        borderRadius: 5,
        marginBottom: 20
+    },
+    viewPlaceholder: {
+        flexDirection: 'row',
+    },
+    image: {
+        height: 30,
+        width: 30,
+        resizeMode: 'contain',
+        marginLeft: 15
+    },
+    noResultsText: {
+        marginLeft: 20,
+        marginTop: 30
     }
 })
 
