@@ -29,12 +29,12 @@ const LoginPage = ({ goBack, onLoginSuccess }) => {
         Alert.alert('Erro', error.message);
       } else if (data?.user) {
         Alert.alert('Bem-vindo', 'Você fez login com sucesso!');
-        setIsAuthenticated(true);
 
         // Sincronizar dados com a tabela usuarios
         await checkAndSyncUserData(data.user);
 
-        // Chama o callback onLoginSuccess para notificar a LaunchPage
+        // Marcar como autenticado e chamar o callback de sucesso
+        setIsAuthenticated(true);
         if (onLoginSuccess) {
           onLoginSuccess();
         }

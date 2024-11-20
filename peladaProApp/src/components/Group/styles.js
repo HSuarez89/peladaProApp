@@ -26,7 +26,8 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#d9d9d9',
         borderRadius: 10,
-        paddingTop: 10
+        paddingTop: 10,
+        marginBottom: 20
     },
     partidaText: {
         color: '#167830',
@@ -69,20 +70,45 @@ const styles = StyleSheet.create({
     },
     goBackView: {
         height: 'auto',
+        marginBottom: 20,
         alignItems: 'center',
-        marginBottom: 20
+        
     },
     goBackButton: {
         width: '50%',
+        marginBottom: 30,
+        alignItems: 'center',
+        backgroundColor: '#167830',
+        borderRadius: 10,
     },
     goBackButtonText: {
-        backgroundColor: '#167830',
+        color: '#ffffff',
+        paddingVertical: 10,
+        fontWeight: 'bold',
+        textAlign: 'center',
+    },
+    modalView: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        backgroundColor: "rgba(0,0,0,0.5)"
+      },
+      leaveGroupView: {
+        height: 'auto',
+        marginBottom: 20,
+        alignItems: 'center'
+      },
+      leaveGroupButton: {
+        width: '50%',
+      },
+      leaveGroupButtonText: {
+        backgroundColor: '#BA0000',
         color: '#ffffff',
         paddingVertical: 10,
         fontWeight: 'bold',
         textAlign: 'center',
         borderRadius: 10
-    }
+      }   
 })
 
 export default styles
