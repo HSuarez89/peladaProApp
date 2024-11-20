@@ -15,7 +15,10 @@ const styles = StyleSheet.create({
     text: {
         color: '#167830',
         fontWeight: 'bold',
-        marginBottom: 10
+        marginBottom: 20,
+        marginLeft: 10,
+        marginTop: 10,
+        fontSize: 18
     },
     searchBar: {
         width: '80%',
@@ -23,12 +26,6 @@ const styles = StyleSheet.create({
         paddingHorizontal: 15,
         paddingVertical: 5,
         borderRadius: 10
-    },
-    viewButton: {
-        width: '100%',
-        flex: 1,
-        alignItems: 'center',
-        flexDirection: 'column-reverse',
     },
     textButton: {
        color: '#ffffff',
@@ -40,6 +37,8 @@ const styles = StyleSheet.create({
     },
     viewPlaceholder: {
         flexDirection: 'row',
+        marginBottom: 30,
+        marginLeft: 20
     },
     image: {
         height: 30,
@@ -50,6 +49,29 @@ const styles = StyleSheet.create({
     noResultsText: {
         marginLeft: 20,
         marginTop: 30
+    },
+    viewTitle: {
+        height: 'auto'
+    },
+    viewGrupos: {
+        flex: 1,
+        backgroundColor: "#ababab",
+    },
+    textGrupos: {
+        color: '#167830',
+        fontWeight: 'bold',
+        marginBottom: 20,
+        marginLeft: 10,
+        marginTop: 10,
+        fontSize: 16,
+    },
+    botaoCriarGrupo: {
+        backgroundColor: '#ababab',
+        alignItems: 'center'
+    },
+    textNaoGrupos: {
+        fontWeight: 'bold',
+        paddingLeft: 30
     }
 })
 
