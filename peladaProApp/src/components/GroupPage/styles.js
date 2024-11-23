@@ -72,6 +72,17 @@ const styles = StyleSheet.create({
     textNaoGrupos: {
         fontWeight: 'bold',
         paddingLeft: 30
+    },
+    groupItem: {
+        height: 'auto',
+        width: '100%',
+        backgroundColor: '#ffffff',
+        borderRadius: 10,
+        paddingVertical: 15,
+        paddingHorizontal: 15
+    },
+    groupItemText: {
+        fontWeight: 'bold'
     }
 })
 

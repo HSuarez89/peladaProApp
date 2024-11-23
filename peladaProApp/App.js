@@ -9,6 +9,7 @@ import GroupPage from './src/components/GroupPage'
 import FinancePage from './src/components/FinancePage'
 import Group from './src/components/Group';
 import CreateGroup from './src/components/CreateGroup';
+import Partida from './src/components/Partida';
 
 const Stack = createStackNavigator()
 
@@ -32,6 +33,8 @@ export default function App() {
         <Stack.Screen name={'Group'} component={Group}/>
 
         <Stack.Screen name={'CreateGroup'} component={CreateGroup}/>
+
+        <Stack.Screen name={'Partida'} component={Partida}/>
 
       </Stack.Navigator>
     </NavigationContainer>

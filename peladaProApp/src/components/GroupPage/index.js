@@ -170,11 +170,11 @@ export default function GroupPage({ navigation }) {
               onPress={() => navigation.navigate("Group", { groupId: group.id })}
               style={styles.groupItem}
             >
-              <Text style={styles.groupName}>{group.group_name}</Text>
-              <Text style={styles.groupDescription}>
+              <Text style={styles.groupItemText}>{group.group_name}</Text>
+              <Text style={styles.groupItemText}>
                 Quadra: {group.court_name || "Sem descrição"}
               </Text>
-              <Text>Adm: {admins[group.adm] || "Carregando..."}</Text>
+              <Text style={styles.groupItemText}>Adm: {admins[group.adm] || "Carregando..."}</Text>
             </TouchableOpacity>
           ))
         )}

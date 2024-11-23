@@ -17,6 +17,17 @@ export default function Group({ navigation, route, groupId }) {
   const [modalVisible, setModalVisible] = useState(false);
   const [pickerMode, setPickerMode] = useState(null);
   const [openMatch, setOpenMatch] = useState(null);
+  const [presenca, setPresenca] = useState(false)
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      setUser(user);
+    };
+    fetchUser();
+  }, []);
 
   useEffect(() => {
 
@@ -49,6 +60,7 @@ export default function Group({ navigation, route, groupId }) {
   }, [groupId]);
 
   useEffect(() => {
+    
     if (!grupo) return;
 
     const fetchGroupDetails = async () => {
@@ -95,27 +107,52 @@ export default function Group({ navigation, route, groupId }) {
 
   useEffect(() => {
     if (!grupo) return;
-
-    const fetchOpenMatch = async () => {
+  
+    const fetchOpenMatchAndPresenca = async () => {
       try {
-        const { data, error } = await supabase
+        // Obter o usuário atual
+        const { data: userData, error: userError } = await supabase.auth.getUser();
+        if (userError) throw userError;
+  
+        const currentUser = userData?.user;
+        if (!currentUser) throw new Error("Usuário não autenticado.");
+  
+        // Buscar a partida aberta
+        const { data: partida, error: partidaError } = await supabase
           .from("partidas")
-          .select("date, time")
+          .select("id, date, time")
           .eq("group_id", grupo.id)
           .eq("status", true)
           .single();
-
-        if (error) throw error;
-
-        if (data) {
-          setOpenMatch(data);
+  
+        if (partidaError) throw partidaError;
+  
+        if (partida) {
+          setOpenMatch(partida);
+  
+          // Verificar se há registro de presença do jogador
+          const { data: presencaData, error: presencaError } = await supabase
+            .from("presenca") // Nome da tabela de presença
+            .select("id") // Apenas verificamos se o registro existe
+            .eq("id", partida.id) // UUID da partida
+            .eq("user_id", currentUser.id) // UUID do usuário
+            .single();
+  
+          if (presencaError && presencaError.code !== "PGRST116") {
+            // Ignorar erro caso o jogador não tenha confirmado presença ainda
+            throw presencaError;
+          }
+  
+          if (presencaData) {
+            setPresenca(true); // Jogador confirmou presença
+          }
         }
       } catch (err) {
-        console.error("Erro ao buscar a partida aberta:", err.message);
+        console.error("Erro ao buscar a partida aberta ou a presença:", err.message);
       }
     };
-
-    fetchOpenMatch();
+  
+    fetchOpenMatchAndPresenca();
   }, [grupo]);
 
   const openPicker = (mode) => {
@@ -137,6 +174,7 @@ export default function Group({ navigation, route, groupId }) {
     if (time) {
       setSelectedTime(time);
       setModalVisible(false);
+      showConfirmAlert();
     } else {
       setModalVisible(false);
     }
@@ -273,20 +311,22 @@ export default function Group({ navigation, route, groupId }) {
         <View style={styles.partidaView}>
           <Text style={styles.partidaText}>Próxima partida</Text>
           {openMatch && (
-            <PartidaCard
-              court_name={grupo.court_name}
-              date={openMatch.date}
-              time={openMatch.time}
-              onPress={() => navigation.navigate("Partida", { matchId: openMatch.id })}
-            />
+            <TouchableOpacity style={styles.partidaButton} onPress={() => navigation.navigate("Partida", {matchId: openMatch.id})}>
+              <Text style={styles.partidaButtonText}>Quadra: {grupo.court_name}</Text>
+              <Text style={styles.partidaButtonText}>Data: {openMatch.date}</Text>
+              <Text style={styles.partidaButtonText}>Hora: {openMatch.time}</Text>
+            </TouchableOpacity>
           )}
         </View>
       )}
 
       {isAdm && (
-        <View style={styles.addMatchButtonView}>
-          <TouchableOpacity style={styles.addMatchButton} onPress={() => openPicker("date")}>
-            <Text style={styles.addMatchButtonText}>Adicionar Partida</Text>
+        <View style={styles.goBackView}>
+          <TouchableOpacity style={styles.goBackButton} onPress={() => openPicker("date")}>
+            <Text style={styles.goBackButtonText}>Adicionar Partida</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.goBackButton}>
+            <Text style={styles.goBackButtonText}>Financeiro do Grupo</Text>
           </TouchableOpacity>
         </View>
       )}

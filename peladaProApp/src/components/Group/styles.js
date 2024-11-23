@@ -108,6 +108,19 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         textAlign: 'center',
         borderRadius: 10
+      },
+      partidaButton: {
+        marginTop: 20,
+        flexDirection: 'row',
+        height: 'auto',
+        backgroundColor: '#ffffff',
+        borderRadius: 5
+      },
+      partidaButtonText: {
+        width: '30%',
+        textAlign: 'center',
+        paddingVertical: 15,
+        fontWeight: 'bold',
       }   
 })
 

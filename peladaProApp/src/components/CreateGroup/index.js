@@ -110,9 +110,6 @@ const CreateGroup = ({ goBack }) => {
         <TouchableOpacity onPress={cadastraGrupo} style={styles.button}>
           <Text style={styles.buttonText}>Criar</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={goBack} style={styles.button}>
-          <Text style={styles.buttonText}>Voltar</Text>
-        </TouchableOpacity>
       </View>
     </View>
   );
