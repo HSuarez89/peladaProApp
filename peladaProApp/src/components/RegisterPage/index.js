@@ -3,7 +3,7 @@ import { Text, TextInput, TouchableOpacity, Keyboard, Pressable, KeyboardAvoidin
 import styles from "./styles";
 import { supabase } from '../../lib/supabase';
 
-const RegisterPage = ({ goBack }) => {
+const RegisterPage = ({ navigation }) => {
     const [name, setName] = useState(null);
     const [email, setEmail] = useState(null);
     const [tel, setTel] = useState(null);
@@ -42,30 +42,33 @@ const RegisterPage = ({ goBack }) => {
         Alert.alert('Usuário cadastrado com sucesso!');
     
         // Atualizando o metadata após o cadastro
-        if (user) {
-            try {
-                const { error: metadataError } = await supabase.auth.updateUser({
-                    data: {
-                        display_name: name, // Nome do usuário
-                        phone: phoneStr,     // Telefone do usuário
-                    }
-                });
-    
-                if (metadataError) {
-                    console.error('Erro ao atualizar o metadata do usuário:', metadataError.message);
-                    Alert.alert('Erro ao atualizar os dados. Tente novamente.');
-                } else {
-                    console.log('Metadata do usuário atualizado com sucesso!');
-                }
-            } catch (error) {
-                console.error('Erro ao atualizar os dados do usuário:', error.message);
-                Alert.alert('Erro inesperado ao tentar atualizar os dados do usuário.');
+        try {
+            const { user, error } = await supabase.auth.signUp({
+              email: email,
+              password: password,
+              options: {
+                data: {
+                  display_name: name,
+                  phone: phoneStr,
+                },
+              },
+            });
+      
+            if (error) {
+              Alert.alert("Erro", error.message);
+              setLoading(false);
+              return;
             }
+      
+            Alert.alert("Sucesso", "Usuário cadastrado com sucesso! Verifique seu e-mail para confirmar.");
+            setLoading(false);
+            navigation.goBack(); // Volta para a tela anterior no Stack Navigator
+          } catch (err) {
+            console.error("Erro ao tentar registrar:", err);
+            Alert.alert("Erro", "Houve um problema ao registrar. Tente novamente.");
+            setLoading(false);
+          }
         }
-    
-        setLoading(false);
-        goBack();
-    }
 
     return (
         <KeyboardAvoidingView style={styles.mainView} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
@@ -111,7 +114,7 @@ const RegisterPage = ({ goBack }) => {
                 <TouchableOpacity style={styles.button} onPress={signUpWithEmail} disabled={loading}>
                     <Text style={styles.buttonText}>Cadastrar</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.button} onPress={goBack}>
+                <TouchableOpacity style={styles.button} onPress={() => navigation.goBack()}>
                     <Text style={styles.buttonText}>Voltar</Text>
                 </TouchableOpacity>
             </Pressable>

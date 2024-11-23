@@ -1,16 +1,16 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, Alert, Image, TouchableOpacity, ActivityIndicator } from "react-native";
+import {
+  View,
+  Text,
+  Alert,
+  Image,
+  TouchableOpacity,
+  ActivityIndicator,
+} from "react-native";
 import { supabase } from "../../lib/supabase";
 import styles from "./styles";
-import { NavigationContainer } from "@react-navigation/native";
-import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import GroupPage from "../GroupPage";
-import FinancePage from "../FinancePage";
-import Ionicons from "react-native-vector-icons/Ionicons";
 
-const Tab = createBottomTabNavigator();
-
-const ProfilePage = ({ onLogout }) => {
+const ProfilePage = ({ navigation }) => {
   const [user, setUser] = useState(null);
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -51,13 +51,13 @@ const ProfilePage = ({ onLogout }) => {
         text: "Sim",
         onPress: async () => {
           await supabase.auth.signOut();
-          onLogout();
+          navigation.replace("LaunchPage"); // Redireciona para a tela inicial após o logout
         },
       },
     ]);
   };
 
-  const UserProfile = () => (
+  return (
     <View style={styles.mainView}>
       <View style={styles.viewHeader}>
         <Image source={require("../../img/logoapp.png")} style={styles.logo} />
@@ -67,46 +67,35 @@ const ProfilePage = ({ onLogout }) => {
       </View>
       <View style={styles.userInfo}>
         <Text style={styles.welcome}>Bem-vindo ao seu perfil</Text>
-        {userData ? (
+        {loading ? (
+          <ActivityIndicator size="large" color="#167830" />
+        ) : userData ? (
           <>
             <Text style={styles.infoText}>Nome: {userData.display_name || "N/A"}</Text>
             <Text style={styles.infoText}>Email: {userData.email}</Text>
-            <Text style={styles.infoText}>Telefone: {userData.phone || "Telefone não informado"}</Text>
+            <Text style={styles.infoText}>
+              Telefone: {userData.phone || "Telefone não informado"}
+            </Text>
           </>
         ) : (
-          <ActivityIndicator size="large" color="#167830" />
+          <Text style={styles.infoText}>Erro ao carregar dados do usuário.</Text>
         )}
       </View>
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => navigation.navigate("GroupPage")}
+        >
+          <Text style={styles.buttonText}>Grupos</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => navigation.navigate("FinancePage")}
+        >
+          <Text style={styles.buttonText}>Finanças</Text>
+        </TouchableOpacity>
+      </View>
     </View>
-  );
-
-  return (
-    <NavigationContainer independent={true}>
-      <Tab.Navigator
-        screenOptions={({ route }) => ({
-          tabBarIcon: ({ focused, color, size }) => {
-            let iconName;
-
-            if (route.name === "Perfil") {
-              iconName = focused ? "person" : "person-outline";
-            } else if (route.name === "Grupos") {
-              iconName = focused ? "people" : "people-outline";
-            } else if (route.name === "Finanças") {
-              iconName = focused ? "wallet" : "wallet-outline";
-            }
-
-            return <Ionicons name={iconName} size={size} color={color} />;
-          },
-          tabBarActiveTintColor: "#167830",
-          tabBarInactiveTintColor: "gray",
-          tabBarLabelStyle: { fontSize: 12 },
-        })}
-      >
-        <Tab.Screen name="Perfil" component={UserProfile} />
-        <Tab.Screen name="Grupos" component={GroupPage} />
-        <Tab.Screen name="Finanças" component={FinancePage} />
-      </Tab.Navigator>
-    </NavigationContainer>
   );
 };
 

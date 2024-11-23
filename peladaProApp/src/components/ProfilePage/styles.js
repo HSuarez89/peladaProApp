@@ -52,6 +52,24 @@ const styles = StyleSheet.create({
         color: '#167830',
         fontWeight: 'bold',
         marginBottom: 10
+    },
+    buttonContainer: {
+        flex: 1,
+        justifyContent: 'flex-end',
+        marginBottom: 30
+    },
+    button: {
+        marginBottom: 30
+    },
+    buttonText: {
+        backgroundColor: '#167830',
+        color: '#ffffff',
+        fontSize: 18,
+        fontWeight: 'bold',
+        paddingHorizontal: 20,
+        paddingVertical: 10,
+        textAlign: 'center',
+        borderRadius: 10
     }
 })
 

@@ -1,30 +1,33 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TextInput, TouchableOpacity, Image, ActivityIndicator } from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Image,
+  ActivityIndicator,
+} from "react-native";
 import { supabase } from "../../lib/supabase";
-import CreateGroup from "../CreateGroup";
-import GroupCard from "../GroupCard";
-import Group from "../Group";
 import styles from "./styles";
 
-export default function GroupPage() {
+export default function GroupPage({ navigation }) {
   const [pesquisaGrupo, setPesquisaGrupo] = useState(null);
-  const [paginaAtual, setPaginaAtual] = useState(null);
   const [gruposEncontrados, setGruposEncontrados] = useState([]); // Grupos associados ao usuário
   const [gruposPesquisados, setGruposPesquisados] = useState([]); // Resultados da busca
-  const [grupoSelecionado, setGrupoSelecionado] = useState(null);
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState(null);
+  const [admins, setAdmins] = useState({}); // Mapeia o ID do adm para o display_name
 
-  // Obter o usuário logado
   useEffect(() => {
     const fetchUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       setUser(user);
     };
     fetchUser();
   }, []);
 
-  // Carregar grupos do usuário logado
   useEffect(() => {
     if (!user) return;
 
@@ -47,6 +50,10 @@ export default function GroupPage() {
         if (groupError) throw groupError;
 
         setGruposEncontrados(groups);
+
+        // Buscar os nomes dos administradores
+        const adminIds = [...new Set(groups.map((group) => group.adm))];
+        fetchAdmins(adminIds);
       } catch (err) {
         console.error("Erro ao carregar grupos:", err);
       } finally {
@@ -57,30 +64,49 @@ export default function GroupPage() {
     fetchGroups();
   }, [user]);
 
-  // Buscar grupo pelo nome com formatação
+  const fetchAdmins = async (adminIds) => {
+    try {
+      const { data: users, error } = await supabase
+        .from("usuarios")
+        .select("id, display_name")
+        .in("id", adminIds);
+
+      if (error) throw error;
+
+      // Criar um mapa de IDs para nomes
+      const adminMap = users.reduce((acc, user) => {
+        acc[user.id] = user.display_name;
+        return acc;
+      }, {});
+
+      setAdmins(adminMap);
+    } catch (err) {
+      console.error("Erro ao buscar nomes dos administradores:", err);
+    }
+  };
+
   async function searchGroup() {
     if (!pesquisaGrupo) return;
 
     setLoading(true);
 
     try {
-      // Formata a pesquisa: converte para minúsculas e remove espaços
       const pesquisaGrupoFormatado = pesquisaGrupo.toLowerCase().replace(/\s+/g, "");
 
-      // Busca todos os grupos da tabela
-      const { data: groups, error } = await supabase
-        .from("Groups")
-        .select("*");
+      const { data: groups, error } = await supabase.from("Groups").select("*");
 
       if (error) throw error;
 
-      // Filtra os grupos localmente com a lógica de formatação
       const gruposFiltrados = groups.filter((group) => {
         const groupNameFormatado = group.group_name.toLowerCase().replace(/\s+/g, "");
         return groupNameFormatado.includes(pesquisaGrupoFormatado);
       });
 
       setGruposPesquisados(gruposFiltrados);
+
+      // Buscar os nomes dos administradores para os grupos encontrados
+      const adminIds = [...new Set(gruposFiltrados.map((group) => group.adm))];
+      fetchAdmins(adminIds);
     } catch (err) {
       console.error("Erro ao buscar grupos:", err);
     } finally {
@@ -88,31 +114,9 @@ export default function GroupPage() {
     }
   }
 
-  function handleCriarGrupo() {
-    setPaginaAtual("criar");
-  }
-
-  function handleVoltar() {
-    setPaginaAtual(null);
-    setGrupoSelecionado(null);
-  }
-
-  function handleAbrirGrupo(grupo) {
-    setGrupoSelecionado(grupo);
-    setPaginaAtual("grupo");
-  }
-
-  if (paginaAtual === "criar") {
-    return <CreateGroup goBack={handleVoltar} />;
-  }
-
-  if (paginaAtual === "grupo" && grupoSelecionado) {
-    return <Group grupo={grupoSelecionado} goBack={handleVoltar} />;
-  }
-
   return (
     <View style={styles.mainView}>
-      {/* Seção de pesquisa */}
+      {/* Pesquisa */}
       <View style={styles.viewTitle}>
         <Text style={styles.text}>Pesquisar Grupos</Text>
       </View>
@@ -128,7 +132,7 @@ export default function GroupPage() {
         </TouchableOpacity>
       </View>
 
-      {/* Resultados da pesquisa */}
+      {/* Resultados */}
       {gruposPesquisados.length > 0 && (
         <View style={styles.viewGrupos}>
           <Text style={styles.textGrupos}>Resultados da Pesquisa</Text>
@@ -136,17 +140,23 @@ export default function GroupPage() {
             <ActivityIndicator size="large" color="#167830" />
           ) : (
             gruposPesquisados.map((group) => (
-              <GroupCard
+              <TouchableOpacity
                 key={group.id}
-                group={group}
-                onOpenGroup={handleAbrirGrupo}
-              />
+                onPress={() => navigation.navigate("Group", { groupId: group.id })}
+                style={styles.groupItem}
+              >
+                <Text style={styles.groupName}>{group.group_name}</Text>
+                <Text style={styles.groupDescription}>
+                  Quadra: {group.court_name || "Sem descrição"}
+                </Text>
+                <Text>Adm: {admins[group.adm] || "Carregando..."}</Text>
+              </TouchableOpacity>
             ))
           )}
         </View>
       )}
 
-      {/* Grupos associados ao usuário */}
+      {/* Meus Grupos */}
       <View style={styles.viewGrupos}>
         <Text style={styles.textGrupos}>Meus Grupos</Text>
         {loading ? (
@@ -155,17 +165,26 @@ export default function GroupPage() {
           <Text style={styles.textNaoGrupos}>Nenhum grupo encontrado.</Text>
         ) : (
           gruposEncontrados.map((group) => (
-            <GroupCard
+            <TouchableOpacity
               key={group.id}
-              group={group}
-              onOpenGroup={handleAbrirGrupo}
-            />
+              onPress={() => navigation.navigate("Group", { groupId: group.id })}
+              style={styles.groupItem}
+            >
+              <Text style={styles.groupName}>{group.group_name}</Text>
+              <Text style={styles.groupDescription}>
+                Quadra: {group.court_name || "Sem descrição"}
+              </Text>
+              <Text>Adm: {admins[group.adm] || "Carregando..."}</Text>
+            </TouchableOpacity>
           ))
         )}
       </View>
 
-      {/* Botão para criar grupo */}
-      <TouchableOpacity onPress={handleCriarGrupo} style={styles.botaoCriarGrupo}>
+      {/* Botão para Criar Grupo */}
+      <TouchableOpacity
+        onPress={() => navigation.navigate("CreateGroup")}
+        style={styles.botaoCriarGrupo}
+      >
         <Text style={styles.textButton}>Criar Grupo</Text>
       </TouchableOpacity>
     </View>

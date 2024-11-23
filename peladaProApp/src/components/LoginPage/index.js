@@ -2,13 +2,12 @@ import React, { useState } from "react";
 import { Text, TextInput, TouchableOpacity, Alert, Keyboard, Pressable, KeyboardAvoidingView, Platform } from "react-native";
 import styles from "./styles";
 import { supabase } from "../../lib/supabase";
-import ProfilePage from "../ProfilePage";
 
-const LoginPage = ({ goBack, onLoginSuccess }) => {
+
+const LoginPage = ({ navigation }) => {
   const [email, setEmail] = useState(null);
   const [password, setPassword] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   async function signInWithEmail() {
     setLoading(true);
@@ -34,10 +33,10 @@ const LoginPage = ({ goBack, onLoginSuccess }) => {
         await checkAndSyncUserData(data.user);
 
         // Marcar como autenticado e chamar o callback de sucesso
-        setIsAuthenticated(true);
-        if (onLoginSuccess) {
-          onLoginSuccess();
-        }
+        navigation.reset({
+          index: 0,
+          routes: [{ name: "ProfilePage" }],
+        });
       } else {
         Alert.alert('Erro', 'Usuário não encontrado ou senha incorreta.');
       }
@@ -88,11 +87,6 @@ const LoginPage = ({ goBack, onLoginSuccess }) => {
     }
   }
 
-  // Se estiver autenticado, renderiza a página de perfil
-  if (isAuthenticated) {
-    return <ProfilePage />;
-  }
-
   return (
     <KeyboardAvoidingView style={styles.mainView} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <Pressable style={styles.form} onPress={() => Keyboard.dismiss()}>
@@ -115,7 +109,7 @@ const LoginPage = ({ goBack, onLoginSuccess }) => {
         <TouchableOpacity style={styles.button} onPress={signInWithEmail} disabled={loading}>
           <Text style={styles.buttonText}>{loading ? 'Carregando...' : 'Entrar'}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.button} onPress={goBack} disabled={loading}>
+        <TouchableOpacity style={styles.button} onPress={() => navigation.goBack()} disabled={loading}>
           <Text style={styles.buttonText}>Voltar</Text>
         </TouchableOpacity>
       </Pressable>

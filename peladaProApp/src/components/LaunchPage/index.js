@@ -1,29 +1,8 @@
-import React, { useState } from "react";
+import React from "react";
 import { View, Text, TouchableOpacity, Image } from "react-native";
 import styles from "./styles";
-import RegisterPage from "../RegisterPage";
-import LoginPage from "../LoginPage";
 
-const LaunchPage = ({ onLoginSuccess }) => {
-  const [page, setPage] = useState(null);
-
-  function goRegisterPage() {
-    setPage('register');
-  }
-
-  function goLoginPage() {
-    setPage('login');
-  }
-
-  function goBack() {
-    setPage(null);
-  }
-
-  if (page === 'register') {
-    return <RegisterPage goBack={goBack} />;
-  } else if (page === 'login') {
-    return <LoginPage goBack={goBack} onLoginSuccess={onLoginSuccess} />; // Passando a função onLoginSuccess para o LoginPage
-  }
+const LaunchPage = ({ navigation }) => {
 
   return (
     <View style={styles.mainView}>
@@ -31,10 +10,10 @@ const LaunchPage = ({ onLoginSuccess }) => {
         <Image source={require('../../img/logoapp.png')} style={styles.image} />
       </View>
       <View style={styles.viewButtons}>
-        <TouchableOpacity style={styles.button} onPress={goLoginPage}>
+        <TouchableOpacity style={styles.button} onPress={() => navigation.navigate("LoginPage")}>
           <Text style={styles.buttonText}>Entrar</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.button} onPress={goRegisterPage}>
+        <TouchableOpacity style={styles.button} onPress={() => navigation.navigate("RegisterPage")}>
           <Text style={styles.buttonText}>Cadastrar</Text>
         </TouchableOpacity>
       </View>
