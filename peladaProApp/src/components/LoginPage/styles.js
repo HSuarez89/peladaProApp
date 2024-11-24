@@ -21,6 +21,8 @@ const styles = StyleSheet.create({
     },
     button: {
         marginTop: 30,
+        marginHorizontal: 'auto',
+        width: '60%'
     },
     buttonText: {
         margin: 'auto',
@@ -30,7 +32,8 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         paddingHorizontal: 30,
         paddingVertical: 15,
-        borderRadius: 15
+        borderRadius: 15,
+        textAlign: 'center'
     }
 })
 

@@ -23,6 +23,7 @@ const styles = StyleSheet.create({
     },
     button: {
         marginBottom: 20,
+        width: '40%'
     },
     buttonText: {
         fontSize: 20,
@@ -31,7 +32,8 @@ const styles = StyleSheet.create({
         backgroundColor: '#167830',
         paddingHorizontal: 30,
         paddingVertical: 15,
-        borderRadius: 15
+        borderRadius: 15,
+        textAlign: 'center'
     }
 })
 

@@ -4,7 +4,7 @@ const styles = StyleSheet.create({
     mainView: {
         width: '100%',
         height: 'auto',
-        paddingHorizontal: 20
+        paddingHorizontal: 20,
     },
     form: {
         marginTop: '25%',
@@ -21,6 +21,8 @@ const styles = StyleSheet.create({
     },
     button: {
         marginTop: 30,
+        width: '40%',
+        marginHorizontal: 'auto'
     },
     buttonText: {
         margin: 'auto',
@@ -30,7 +32,8 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         paddingHorizontal: 30,
         paddingVertical: 15,
-        borderRadius: 15
+        borderRadius: 15,
+        textAlign: 'center'
     }
 })
 

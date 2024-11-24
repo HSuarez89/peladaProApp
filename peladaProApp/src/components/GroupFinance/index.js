@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, FlatList, Alert } from "react-native";
 import { supabase } from "../../lib/supabase";
+import styles from "./styles";
 
 export default function GroupFinance({ route }) {
   const { groupId } = route.params;
@@ -37,19 +38,19 @@ export default function GroupFinance({ route }) {
   }, [groupId]);
 
   const renderPagamento = ({ item }) => (
-    <View>
-      <Text>{item.usuarios?.display_name || "Desconhecido"}</Text>
-      <Text>{new Date(item.date).toLocaleDateString()}</Text>
-      <Text>R$ {item.value},00</Text>
+    <View style={styles.flatList}>
+      <Text style={styles.flatListItem}>{item.usuarios?.display_name || "Desconhecido"}</Text>
+      <Text style={styles.flatListItem}>{new Date(item.date).toLocaleDateString()}</Text>
+      <Text style={styles.flatListItem}>R$ {item.value},00</Text>
     </View>
   );
 
   return (
-    <View>
-      <View>
-        <Text>Pagamentos do Grupo</Text>
+    <View style={styles.mainView}>
+      <View style={styles.titleView}>
+        <Text style={styles.titleText}>Pagamentos do Grupo</Text>
       </View>
-      <View>
+      <View style={styles.listView}>
         {loading ? (
           <Text>Carregando...</Text>
         ) : (
