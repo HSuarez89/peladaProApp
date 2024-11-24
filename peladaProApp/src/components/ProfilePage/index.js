@@ -90,7 +90,7 @@ const ProfilePage = ({ navigation }) => {
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.button}
-          onPress={() => navigation.navigate("FinancePage")}
+          onPress={() => navigation.navigate("FinancePage", {user: user.id})}
         >
           <Text style={styles.buttonText}>Finanças</Text>
         </TouchableOpacity>

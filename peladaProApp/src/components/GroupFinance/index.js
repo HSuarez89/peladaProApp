@@ -2,8 +2,8 @@ import React, { useState, useEffect } from "react";
 import { View, Text, FlatList, Alert } from "react-native";
 import { supabase } from "../../lib/supabase";
 
-export default function FinancePage({ route }) {
-  const { user } = route.params; // Recebe o ID do usuário via params
+export default function GroupFinance({ route }) {
+  const { groupId } = route.params;
   const [pagamentos, setPagamentos] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -15,9 +15,9 @@ export default function FinancePage({ route }) {
           .select(`
             date,
             value,
-            Groups: group_id (group_name)
+            usuarios: user_id (display_name)
           `)
-          .eq("user_id", user);
+          .eq("group_id", groupId);
 
         if (error) {
           console.error("Erro ao buscar pagamentos:", error.message);
@@ -34,11 +34,11 @@ export default function FinancePage({ route }) {
     };
 
     fetchPagamentos();
-  }, [user]);
+  }, [groupId]);
 
   const renderPagamento = ({ item }) => (
     <View>
-      <Text>{item.Groups?.group_name || "Desconhecido"}</Text>
+      <Text>{item.usuarios?.display_name || "Desconhecido"}</Text>
       <Text>{new Date(item.date).toLocaleDateString()}</Text>
       <Text>R$ {item.value},00</Text>
     </View>
@@ -47,7 +47,7 @@ export default function FinancePage({ route }) {
   return (
     <View>
       <View>
-        <Text>Finanças</Text>
+        <Text>Pagamentos do Grupo</Text>
       </View>
       <View>
         {loading ? (

@@ -11,12 +11,12 @@ export default function Group({ navigation, route, groupId }) {
   const [admName, setAdmName] = useState(null);
   const [loading, setLoading] = useState(true);
   const [grupo, setGrupo] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
 
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedTime, setSelectedTime] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [pickerMode, setPickerMode] = useState(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [openMatch, setOpenMatch] = useState(null);
   const [presenca, setPresenca] = useState(false)
 
@@ -25,7 +25,7 @@ export default function Group({ navigation, route, groupId }) {
       const {
         data: { user },
       } = await supabase.auth.getUser();
-      setUser(user);
+      setCurrentUser(user);
     };
     fetchUser();
   }, []);
@@ -361,12 +361,20 @@ export default function Group({ navigation, route, groupId }) {
         </View>
       )}
 
+      {isPlayer && (
+        <View style={styles.goBackView}>
+          <TouchableOpacity style={styles.goBackButton} onPress={() => navigation.navigate('Payment', { groupId: grupo.id, userId: currentUser?.id })}>
+            <Text style={styles.goBackButtonText}>Lançar Pagamento</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
       {isAdm && (
         <View style={styles.goBackView}>
           <TouchableOpacity style={styles.goBackButton} onPress={openDatePicker}>
             <Text style={styles.goBackButtonText}>Adicionar Partida</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.goBackButton}>
+          <TouchableOpacity style={styles.goBackButton} onPress={() => navigation.navigate('GroupFinance', {groupId: grupo.id})}>
             <Text style={styles.goBackButtonText}>Financeiro do Grupo</Text>
           </TouchableOpacity>
         </View>
