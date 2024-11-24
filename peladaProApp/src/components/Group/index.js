@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, ActivityIndicator, Modal, Button, Alert }
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { supabase } from "../../lib/supabase";
 import styles from "./styles";
-import PartidaCard from "../PartidaCard";
+import { useFocusEffect } from '@react-navigation/native';
 
 export default function Group({ navigation, route, groupId }) {
   const [isAdm, setIsAdm] = useState(false);
@@ -16,6 +16,7 @@ export default function Group({ navigation, route, groupId }) {
   const [selectedTime, setSelectedTime] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [pickerMode, setPickerMode] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [openMatch, setOpenMatch] = useState(null);
   const [presenca, setPresenca] = useState(false)
 
@@ -105,97 +106,135 @@ export default function Group({ navigation, route, groupId }) {
     fetchGroupDetails();
   }, [grupo]);
 
-  useEffect(() => {
-    if (!grupo) return;
-  
-    const fetchOpenMatchAndPresenca = async () => {
-      try {
-        // Obter o usuário atual
-        const { data: userData, error: userError } = await supabase.auth.getUser();
-        if (userError) throw userError;
-  
-        const currentUser = userData?.user;
-        if (!currentUser) throw new Error("Usuário não autenticado.");
-  
-        // Buscar a partida aberta
-        const { data: partida, error: partidaError } = await supabase
-          .from("partidas")
-          .select("id, date, time")
-          .eq("group_id", grupo.id)
-          .eq("status", true)
-          .single();
-  
-        if (partidaError) throw partidaError;
-  
-        if (partida) {
-          setOpenMatch(partida);
-  
-          // Verificar se há registro de presença do jogador
-          const { data: presencaData, error: presencaError } = await supabase
-            .from("presenca") // Nome da tabela de presença
-            .select("id") // Apenas verificamos se o registro existe
-            .eq("id", partida.id) // UUID da partida
-            .eq("user_id", currentUser.id) // UUID do usuário
-            .single();
-  
-          if (presencaError && presencaError.code !== "PGRST116") {
-            // Ignorar erro caso o jogador não tenha confirmado presença ainda
-            throw presencaError;
-          }
-  
-          if (presencaData) {
-            setPresenca(true); // Jogador confirmou presença
-          }
-        }
-      } catch (err) {
-        console.error("Erro ao buscar a partida aberta ou a presença:", err.message);
+  useFocusEffect(
+    React.useCallback(() => {
+      if (grupo) {
+        fetchOpenMatchAndPresenca();
       }
-    };
+    }, [grupo])
+  );
+
+  const fetchOpenMatchAndPresenca = async () => {
+    try {
+      // Obter o usuário atual
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError) throw userError;
+
+      const currentUser = userData?.user;
+      if (!currentUser) throw new Error("Usuário não autenticado.");
+
+      // Buscar a partida aberta
+      const { data: partida, error: partidaError } = await supabase
+        .from("partidas")
+        .select("id, date, time")
+        .eq("group_id", grupo.id)
+        .eq("status", true)
+        .maybeSingle(); // Retorna null se nenhuma partida for encontrada
+
+      if (partidaError) throw partidaError;
+
+      if (partida) {
+        setOpenMatch(partida);
+
+        // Verificar se há registro de presença do jogador
+        const { data: presencaData, error: presencaError } = await supabase
+          .from("presenca")
+          .select("id")
+          .eq("id", partida.id) // Relaciona pelo match_id
+          .eq("user_id", currentUser.id) // Relaciona pelo user_id
+          .maybeSingle(); // Retorna null se o jogador não confirmou presença
+
+        if (presencaError && presencaError.code !== "PGRST116") {
+          throw presencaError;
+        }
+
+        if (presencaData) {
+          setPresenca(true); // Jogador confirmou presença
+        } else {
+          setPresenca(false); // Jogador não confirmou presença
+        }
+      } else {
+        setOpenMatch(null); // Nenhuma partida aberta
+      }
+    } catch (err) {
+      console.error("Erro ao buscar a partida aberta ou a presença:", err.message);
+      setOpenMatch(null); // Limpa caso ocorra erro
+      setPresenca(false);
+    }
+  };  
+
+  const openDatePicker = () => {
+    setSelectedDate(null); // Limpa a data
+    setSelectedTime(null); // Limpa a hora
+    setPickerMode("date"); // Modo para selecionar a data
+    setModalVisible(true); // Abre o modal
+  };
   
-    fetchOpenMatchAndPresenca();
-  }, [grupo]);
-
-  const openPicker = (mode) => {
-    setPickerMode(mode);
-    setModalVisible(true);
-  };
-
-  const handleDateChange = (event, date) => {
+  const handleDateChange = async (event, date) => {
     if (date) {
-      setSelectedDate(date);
-      setModalVisible(false);
-      openPicker("time");
+      console.log("Data selecionada:", date);
+      setSelectedDate(date); // Atualiza a data selecionada
+      setPickerMode("time"); // Altera para o modo de seleção de hora
+      setModalVisible(true); // Reabre o modal para a seleção da hora
     } else {
-      setModalVisible(false);
+      setModalVisible(false); // Fecha o modal caso o usuário cancele
     }
   };
-
-  const handleTimeChange = (event, time) => {
+  
+  const handleTimeChange = async (event, time) => {
     if (time) {
-      setSelectedTime(time);
-      setModalVisible(false);
-      showConfirmAlert();
+      console.log("Hora selecionada:", time);
+      const newTime = new Date(selectedDate); // Cria um novo objeto Date com a data selecionada
+      newTime.setHours(time.getHours(), time.getMinutes()); // Define a hora e os minutos com base no valor selecionado
+      setSelectedTime(newTime); // Atualiza a hora selecionada no estado
     } else {
-      setModalVisible(false);
+      setSelectedTime(null); // Caso o usuário cancele, a hora é definida como null
     }
+  
+    setModalVisible(false); // Fecha o modal após a seleção da hora
+    await showConfirmAlert(time); // Passa a hora selecionada diretamente para a função de confirmação
   };
-
-  const showConfirmAlert = () => {
-    if (!selectedDate || !selectedTime) {
-      alert("Por favor, selecione tanto a data quanto a hora.");
+  
+  const showConfirmAlert = async (time) => {
+    console.log("selectedDate:", selectedDate);
+    console.log("Hora recebida na confirmação:", time);
+  
+    // Verifique se selectedDate e a hora estão definidos corretamente
+    if (!selectedDate || !time) {
+      console.log("Data ou hora não selecionadas corretamente");
+      Alert.alert("Erro", "Por favor, selecione tanto a data quanto a hora.");
       return;
     }
-
+  
+    // Verifique se são datas válidas
+    if (isNaN(selectedDate.getTime()) || isNaN(time.getTime())) {
+      Alert.alert("Erro", "Por favor, selecione tanto a data quanto a hora.");
+      return;
+    }
+  
+    // Formatação da data e hora
     const formattedDate = selectedDate.toISOString().split("T")[0];
-    const formattedTime = selectedTime.toISOString().split("T")[1].slice(0, 5);
-
+  
+    // Formata a hora corretamente
+    const hours = time.getHours().toString().padStart(2, '0');
+    const minutes = time.getMinutes().toString().padStart(2, '0');
+    const formattedTime = `${hours}:${minutes}`;
+  
+    // Defina um valor válido para o group_id (este valor precisa vir de algum lugar do seu app)
+    const groupId = 1; // Exemplo: você pode substituir por um ID de grupo real que você tenha no app
+  
+    // Exibe o alerta de confirmação
     Alert.alert(
       "Confirmar partida",
       `Data: ${formattedDate}\nHora: ${formattedTime}`,
       [
         {
           text: "Cancelar",
-          onPress: () => console.log("Partida não criada"),
+          onPress: () => {
+            console.log("Partida não criada");
+            setSelectedDate(null);
+            setSelectedTime(null);
+          },
           style: "cancel",
         },
         {
@@ -210,25 +249,27 @@ export default function Group({ navigation, route, groupId }) {
                   status: true,
                 },
               ]);
-
+              fetchOpenMatchAndPresenca()
               if (error) {
                 console.error("Erro ao criar a partida:", error.message);
-                alert("Erro ao criar a partida.");
+                Alert.alert("Erro", "Erro ao criar a partida.");
                 return;
               }
-
-              alert("Partida criada com sucesso!");
+  
+              console.log("Partida criada com sucesso:", data);
+              Alert.alert("Sucesso", "Partida criada com sucesso!");
+  
               setSelectedDate(null);
               setSelectedTime(null);
             } catch (err) {
-              console.error("Erro ao criar a partida:", err.message);
-              alert("Erro ao criar a partida.");
+              console.error("Erro inesperado:", err.message);
+              Alert.alert("Erro", "Erro ao criar a partida.");
             }
           },
         },
       ]
     );
-  };
+  };              
 
   const removePlayerFromGroup = async () => {
     const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -322,7 +363,7 @@ export default function Group({ navigation, route, groupId }) {
 
       {isAdm && (
         <View style={styles.goBackView}>
-          <TouchableOpacity style={styles.goBackButton} onPress={() => openPicker("date")}>
+          <TouchableOpacity style={styles.goBackButton} onPress={openDatePicker}>
             <Text style={styles.goBackButtonText}>Adicionar Partida</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.goBackButton}>

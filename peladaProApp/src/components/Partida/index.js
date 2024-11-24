@@ -1,32 +1,31 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, ActivityIndicator, TouchableOpacity } from "react-native";
-import { supabase } from "../../lib/supabase"; // Ajuste o caminho conforme necessário
+import { View, Text, ActivityIndicator, TouchableOpacity, Alert, FlatList } from "react-native";
+import { supabase } from "../../lib/supabase";
 import styles from "./styles";
 
-export default function Partida({ route }) {
-  const { matchId } = route.params; // Obtém o matchId passado pela navegação
+export default function Partida({ route, navigation }) {
+  const { matchId } = route.params;
   const [matchDetails, setMatchDetails] = useState(null);
-  const [groupDetails, setGroupDetails] = useState(null); // Para armazenar os detalhes do grupo
-  const [user, setUser] = useState(null); // Para armazenar os dados do usuário logado
+  const [groupDetails, setGroupDetails] = useState(null);
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [players, setPlayers] = useState([]); // Lista de jogadores confirmados
 
-  // Função para buscar os detalhes da partida
   const fetchMatchDetails = async () => {
     try {
       const { data: matchData, error: matchError } = await supabase
         .from("partidas")
-        .select("*, Groups(*)") // Busca os detalhes da partida e do grupo
+        .select("*, Groups(*)")
         .eq("id", matchId)
-        .single(); // Busca apenas uma partida
+        .single();
 
       if (matchError) throw matchError;
 
       if (matchData) {
-        setMatchDetails(matchData); // Define os detalhes da partida
+        setMatchDetails(matchData);
 
-        // Extrai o group_id e busca os dados do grupo
         const groupId = matchData.group_id;
-        fetchGroupDetails(groupId); // Chama a função para buscar os dados do grupo
+        fetchGroupDetails(groupId);
       }
     } catch (err) {
       console.error("Erro ao buscar os detalhes da partida:", err.message);
@@ -35,58 +34,109 @@ export default function Partida({ route }) {
     }
   };
 
-  // Função para buscar os detalhes do grupo
   const fetchGroupDetails = async (groupId) => {
     try {
       const { data: groupData, error: groupError } = await supabase
         .from("Groups")
-        .select("group_name, court_name, court_address, adm") // Busca o grupo com o adm
+        .select("group_name, court_name, court_address, adm")
         .eq("id", groupId)
-        .single(); // Busca o grupo relacionado à partida
+        .single();
 
       if (groupError) throw groupError;
 
       if (groupData) {
-        setGroupDetails(groupData); // Define os detalhes do grupo
+        setGroupDetails(groupData);
       }
     } catch (err) {
       console.error("Erro ao buscar os detalhes do grupo:", err.message);
     }
   };
 
-  // Obtendo o usuário logado
+  const fetchPresenceList = async () => {
+    try {
+      const { data: presenceData, error: presenceError } = await supabase
+        .from("presenca")
+        .select("user_id")
+        .eq("id", matchId);
+  
+      if (presenceError) throw presenceError;
+  
+      if (presenceData) {
+        // Buscar os nomes dos jogadores com base nos IDs da tabela `usuarios`
+        const userIds = presenceData.map((presence) => presence.user_id);
+  
+        const { data: usersData, error: usersError } = await supabase
+          .from("usuarios")
+          .select("id, display_name") // Alterado para selecionar 'display_name'
+          .in("id", userIds);
+  
+        if (usersError) throw usersError;
+  
+        setPlayers(usersData); // Lista de jogadores confirmados
+      }
+    } catch (err) {
+      console.error("Erro ao buscar lista de presença:", err.message);
+    }
+  };
+
+  const handleCloseMatch = async () => {
+    try {
+      const { error } = await supabase
+        .from("partidas")
+        .update({ status: false }) 
+        .eq("id", matchId);
+  
+      if (error) throw error;
+  
+      alert("Partida fechada com sucesso!");
+      setMatchDetails((prev) => ({ ...prev, status: false }));
+      navigation.goBack();
+    } catch (err) {
+      console.error("Erro ao fechar a partida:", err.message);
+      alert("Erro ao fechar a partida: " + err.message);
+    }
+  };
+  
+
+  const confirmarPresenca = async () => {
+    if (!user || !matchId) {
+      Alert.alert("Erro", "Não foi possível confirmar presença. Tente novamente.");
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase.from("presenca").insert({
+        id: matchId, // ID da partida
+        user_id: user.user.id, // ID do usuário
+      });
+
+      if (error) throw error;
+
+      Alert.alert("Sucesso", "Sua presença foi confirmada com sucesso!");
+      fetchPresenceList(); // Atualizar lista de presença após confirmação
+    } catch (err) {
+      console.error("Erro ao confirmar presença:", err.message);
+      Alert.alert("Erro", "Não foi possível confirmar presença. Tente novamente.");
+    }
+  };
+
   useEffect(() => {
     const fetchUserDetails = async () => {
       const { data: userData, error } = await supabase.auth.getUser();
-      
+
       if (error) {
         console.error("Erro ao obter dados do usuário:", error.message);
       } else {
-        console.log("Usuário logado:", userData); // Verifique se os dados do usuário estão sendo retornados
-        setUser(userData); // Armazena os dados do usuário logado
+        setUser(userData);
       }
     };
 
     fetchUserDetails();
     if (matchId) {
       fetchMatchDetails();
+      fetchPresenceList();
     }
   }, [matchId]);
-
-  // Verificando se o usuário é o administrador, somente quando o user e groupDetails estiverem definidos
-  useEffect(() => {
-    if (user && groupDetails) {
-      console.log("ID do Usuário Logado:", user.user.id); // Log para verificar o id do usuário logado
-      console.log("Administrador do Grupo ID:", groupDetails.adm); // Log para verificar o id do admin do grupo
-
-      const isAdmin = user.user.id === groupDetails.adm; // Comparação para verificar se é o administrador
-      console.log("É administrador?", isAdmin);
-
-      if (isAdmin) {
-        // Aqui você pode realizar qualquer ação adicional se for admin
-      }
-    }
-  }, [user, groupDetails]);
 
   if (loading) {
     return (
@@ -105,7 +155,6 @@ export default function Partida({ route }) {
     );
   }
 
-  // Verificando a variável isAdmin para exibir o botão de "Fechar partida"
   const isAdmin = user?.user.id === groupDetails.adm;
 
   return (
@@ -120,18 +169,32 @@ export default function Partida({ route }) {
         <Text style={styles.detail}>Status: {matchDetails.status ? "Aberta" : "Encerrada"}</Text>
       </View>
 
-      {/* Renderiza o botão "Fechar Partida" apenas se o usuário for o adm do grupo */}
+      <View style={styles.viewPresenca}>
+        <Text style={styles.viewPresencaText}>Lista de presença</Text>
+        <FlatList
+          data={players}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+          <Text style={styles.playerName}>{item.display_name}</Text>
+          )}
+          contentContainerStyle={styles.playerList}
+        />
+
+      </View>
+
+      <View style={styles.viewBotao}>
+        <TouchableOpacity style={styles.botao} onPress={confirmarPresenca}>
+          <Text style={styles.textBotao}>Confirmar Presença</Text>
+        </TouchableOpacity>
+      </View>
+
       {isAdmin && (
-        <View>
-          <TouchableOpacity>
-            <Text>Fechar Partida</Text>
+        <View style={styles.viewBotao}>
+          <TouchableOpacity style={styles.botao} onPress={handleCloseMatch}>
+            <Text style={styles.textBotao}>Fechar Partida</Text>
           </TouchableOpacity>
         </View>
       )}
-
-      <View>
-        <Text>Lista de presença</Text>
-      </View>
     </View>
   );
 }
