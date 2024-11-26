@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { View, Text, TouchableOpacity, TextInput, Alert, Keyboard } from "react-native";
 import { supabase } from "../../lib/supabase";
+import styles from "./styles";
 
 export default function Payment({ navigation, route }) {
   const [valor, setValor] = useState("");
@@ -39,22 +40,23 @@ export default function Payment({ navigation, route }) {
   };
 
   return (
-    <View>
-      <View>
-        <Text>Lançar Pagamento</Text>
+    <View style={styles.mainView}>
+      <View style={styles.titleView}>
+        <Text style={styles.titleText}>Lançar Pagamento</Text>
       </View>
-      <View>
-        <Text>Valor:</Text>
+      <View style={styles.paymentView}>
+        <Text style={styles.paymentText}>Valor:</Text>
         <TextInput
           placeholder="Ex: 50"
           onChangeText={setValor}
           value={valor}
           keyboardType="numeric"
+          style={styles.paymentInput}
         />
       </View>
-      <View>
-        <TouchableOpacity onPress={handleLancarPagamento}>
-          <Text>Lançar</Text>
+      <View style={styles.buttonView}>
+        <TouchableOpacity onPress={handleLancarPagamento} style={styles.button}>
+          <Text style={styles.buttonText}>Lançar</Text>
         </TouchableOpacity>
       </View>
     </View>
