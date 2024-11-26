@@ -121,6 +121,25 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         paddingVertical: 15,
         fontWeight: 'bold',
+      },
+      enterGroupView: {
+        flex: 1,
+        justifyContent: 'flex-end',
+        alignItems: 'center'
+      },
+      enterGroupButton: {
+        marginBottom: 30
+      },
+      enterGroupButtonText: {
+        backgroundColor: '#167830',
+        width: '40%',
+        paddingHorizontal: 20,
+        paddingVertical: 15,
+        color: '#ffffff',
+        fontWeight: 'bold',
+        fontSize: 16,
+        borderRadius: 10
+    
       }   
 })
 
